@@ -1,0 +1,26 @@
+##############################################
+# 星驰API 自动签到 · Quantumult X 配置片段 (v9)
+# 站点：https://xingchiapi.com
+# 仓库：<bravo-l>/xingchi-qx  (两个 .js 放在仓库根目录)
+##############################################
+
+# ===== 1) [rewrite_local] 里加这两行 =====
+# 作用：浏览器登录站点时，自动截获 token 存入本地，供签到脚本使用
+^https?:\/\/(api\.)?xingchiapi\.com\/api\/v1\/(auth|user)\/ url script-response-body https://raw.githubusercontent.com/<bravo-l>/xingchi-qx/main/xingchi_capture.js
+
+# ===== 2) [mitm] 里加上域名（去重，已存在就不用重复加）=====
+hostname = api.xingchiapi.com, xingchiapi.com
+
+# ===== 3) [task_local] 里加这一行（每天 08:05 自动签到）=====
+# 格式：cron表达式  脚本地址  脚本名
+0 5 8 * * * https://raw.githubusercontent.com/<bravo-l>/xingchi-qx/main/xingchi_checkin.js  星驰API签到
+
+##############################################
+# 使用步骤
+# 1. 把本片段里的 <你的GitHub用户名> 全部替换成你的 GitHub 用户名
+# 2. [rewrite_local] 整段复制进圈X「重写」区域的对应位置
+# 3. [mitm] hostname 合并进你已有的 hostname 行（圈X设置→MITM，并安装/信任证书）
+# 4. [task_local] 整段复制进圈X「其他设置 → 任务」区域
+# 5. 手机浏览器打开 https://xingchiapi.com 登录一次，
+#    抓取脚本会弹通知「星驰Token已抓取」，之后每天定时自动签到
+##############################################
