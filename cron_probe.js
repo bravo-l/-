@@ -16,10 +16,29 @@ const names = [
   "$cache",
 ];
 
-const available = names.filter((name) => typeof eval(name) !== "undefined");
-const unavailable = names.filter((name) => typeof eval(name) === "undefined");
-
-$done({
-  available: available.join(", "),
-  unavailable: unavailable.join(", "),
+const available = names.filter((name) => {
+  try {
+    return typeof eval(name) !== "undefined";
+  } catch (e) {
+    return false;
+  }
 });
+const unavailable = names.filter((name) => {
+  try {
+    return typeof eval(name) === "undefined";
+  } catch (e) {
+    return true;
+  }
+});
+
+try {
+  $notify("环境探测", "可用", available.join(", ") || "无");
+  $notify("环境探测", "不可用", unavailable.join(", ") || "无");
+} catch (e) {}
+
+if (typeof $done === "function") {
+  $done({
+    available: available.join(", "),
+    unavailable: unavailable.join(", "),
+  });
+}
