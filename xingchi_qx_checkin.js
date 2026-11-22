@@ -4,9 +4,9 @@
  * 首次签到请在圈X [mitm] 里开启域名解密，或直接在持久化存储中保存 access_token。
  */
 
-const BASE_URL = "https://api.xingchiapi.com";
+const BASE_URL = "https://xingchiapi.com";
 const STATUS_URL = BASE_URL + "/api/v1/lottery";
-const CHECKIN_URL = BASE_URL + "/api/v1/lottery/draw";
+const CHECKIN_URL = BASE_URL + "/api/v1/lottery/draw?timezone=Asia%2FShanghai";
 const PROFILE_URL = BASE_URL + "/api/v1/auth/me";
 const STORE_KEY = "xingchi_qx_access_token";
 const MANUAL_ACCESS_TOKEN = "";
