@@ -1,6 +1,6 @@
 /**
  * 星驰API refresh_token 抓取 · Quantumult X
- * 匹配登录/续期响应，自动保存到持久化存储，供签到脚本使用。
+ * 匹配登录/续期响应，或任意携带 Authorization 的请求，自动保存到持久化存储。
  */
 
 const STORE_KEY = "xingchi_qx_access_token";
@@ -25,7 +25,9 @@ function notify(title, subtitle, body) {
 }
 
 const host = $request.url.split("/")[2] || "";
-const isAuthResponse = API_HOSTS.some((h) => host === h || host.endsWith("." + h)) && $request.url.indexOf("/api/v1/auth/") !== -1;
+const targetHost = API_HOSTS.some((h) => host === h || host.endsWith("." + h));
+const authHeader = $request.headers["Authorization"] || $request.headers["authorization"] || "";
+const isAuthResponse = targetHost && ($request.url.indexOf("/api/v1/auth/") !== -1 || authHeader.startsWith("Bearer "));
 
 if ($response && isAuthResponse && ($request.method === "POST" || $request.method === "GET")) {
   try {
