@@ -16,9 +16,27 @@ function readToken() {
   if (MANUAL_ACCESS_TOKEN.trim()) {
     return MANUAL_ACCESS_TOKEN.trim();
   }
-  let token = $persistentStore.read(STORE_KEY) || "";
-  if (!token) {
+  let token = "";
+  try {
     token = $prefs.valueForKey(STORE_KEY) || "";
+  } catch (e) {}
+  if (!token) {
+    try {
+      token = $persistentStore.read(STORE_KEY) || "";
+    } catch (e) {}
+  }
+  if (!token && typeof $environment === "object" && $environment.params) {
+    token = $environment.params[STORE_KEY] || "";
+  }
+  if (!token) {
+    try {
+      token = $prefs.get(STORE_KEY) || "";
+    } catch (e) {}
+  }
+  if (!token) {
+    try {
+      token = $cache.get(STORE_KEY) || "";
+    } catch (e) {}
   }
   return String(token).trim();
 }
@@ -90,11 +108,11 @@ function formatQuota(value) {
 
 (async () => {
   try {
-    if (!$response) {
+    if (!$request || !$response) {
       const token = readToken();
       if (!token) {
         notify("星驰API 签到", "缺少 access_token", "请重新登录网站触发一次抓取");
-        $done({});
+        $done();
         return;
       }
       await doCheckin(token);
@@ -106,7 +124,7 @@ function formatQuota(value) {
       }
       const balance = profile && (profile.quota !== undefined ? profile.quota : profile.balance);
       notify("星驰API 签到", "签到成功", balance !== undefined ? "当前余额：" + formatQuota(balance) : "已自动签到");
-      $done({});
+      $done();
       return;
     }
     const token = readToken();
