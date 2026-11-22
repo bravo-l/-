@@ -17,10 +17,12 @@ function readToken() {
     return MANUAL_ACCESS_TOKEN.trim();
   }
   let token = "";
-  try {
-    token = $prefs.valueForKey(STORE_KEY) || "";
-  } catch (e) {}
-  if (!token) {
+  if (typeof $prefs !== "undefined") {
+    try {
+      token = $prefs.valueForKey(STORE_KEY) || "";
+    } catch (e) {}
+  }
+  if (!token && typeof $persistentStore !== "undefined") {
     try {
       token = $persistentStore.read(STORE_KEY) || "";
     } catch (e) {}
@@ -28,12 +30,7 @@ function readToken() {
   if (!token && typeof $environment === "object" && $environment.params) {
     token = $environment.params[STORE_KEY] || "";
   }
-  if (!token) {
-    try {
-      token = $prefs.get(STORE_KEY) || "";
-    } catch (e) {}
-  }
-  if (!token) {
+  if (!token && typeof $cache !== "undefined") {
     try {
       token = $cache.get(STORE_KEY) || "";
     } catch (e) {}
@@ -43,10 +40,16 @@ function readToken() {
 
 function saveToken(token) {
   if (!token) return;
-  try {
-    $persistentStore.write(String(token), STORE_KEY);
-  } catch (e) {
+  if (typeof $persistentStore !== "undefined") {
+    try {
+      $persistentStore.write(String(token), STORE_KEY);
+      return;
+    } catch (e) {}
+  }
+  if (typeof $prefs !== "undefined") {
+    try {
     $prefs.setValueForKey(String(token), STORE_KEY);
+    } catch (e) {}
   }
 }
 
