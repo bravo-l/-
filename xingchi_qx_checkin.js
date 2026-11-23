@@ -4,53 +4,29 @@
  * 首次签到请在圈X [mitm] 里开启域名解密，或直接在持久化存储中保存 access_token。
  */
 
-const BASE_URL = "https://xingchiapi.com";
-const STATUS_URL = BASE_URL + "/api/v1/lottery";
-const CHECKIN_URL = BASE_URL + "/api/v1/lottery/draw?timezone=Asia%2FShanghai";
-const PROFILE_URL = BASE_URL + "/api/v1/auth/me";
+const BASE_URL = "https://api.xingchiapi.com";
+const CHECKIN_URL = BASE_URL + "/api/v1/user/checkin";
+const PROFILE_URL = BASE_URL + "/api/v1/user/profile";
 const STORE_KEY = "xingchi_qx_access_token";
 const MANUAL_ACCESS_TOKEN = "";
 const QUOTA_PER_DOLLAR = 500000;
 
 function readToken() {
-  if (MANUAL_ACCESS_TOKEN.trim()) {
-    return MANUAL_ACCESS_TOKEN.trim();
-  }
-  let token = "";
-  if (typeof $prefs !== "undefined") {
-    try {
-      token = $prefs.valueForKey(STORE_KEY) || "";
-    } catch (e) {}
-  }
-  if (!token && typeof $persistentStore !== "undefined") {
-    try {
-      token = $persistentStore.read(STORE_KEY) || "";
-    } catch (e) {}
-  }
-  if (!token && typeof $environment === "object" && $environment.params) {
-    token = $environment.params[STORE_KEY] || "";
-  }
-  if (!token && typeof $cache !== "undefined") {
-    try {
-      token = $cache.get(STORE_KEY) || "";
-    } catch (e) {}
-  }
-  return String(token).trim();
-}
-
-function saveToken(token) {
-  if (!token) return;
-  if (typeof $persistentStore !== "undefined") {
-    try {
-      $persistentStore.write(String(token), STORE_KEY);
-      return;
-    } catch (e) {}
-  }
-  if (typeof $prefs !== "undefined") {
-    try {
-    $prefs.setValueForKey(String(token), STORE_KEY);
-    } catch (e) {}
-  }
+  const manual = String(MANUAL_ACCESS_TOKEN || "").trim();
+  if (manual) return manual;
+  try {
+    if (typeof $prefs !== "undefined") {
+      const v = $prefs.valueForKey(STORE_KEY);
+      if (v) return String(v).trim();
+    }
+  } catch (e) {}
+  try {
+    if (typeof $persistentStore !== "undefined") {
+      const v = $persistentStore.read(STORE_KEY);
+      if (v) return String(v).trim();
+    }
+  } catch (e) {}
+  return "";
 }
 
 function notify(title, subtitle, body) {
@@ -95,13 +71,22 @@ async function doCheckin(token) {
     Authorization: "Bearer " + token,
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
   }, undefined);
+  let payload;
   try {
-    return unwrap(resp.data);
+    payload = unwrap(resp.data);
   } catch (e) {
     let payload = {};
     try { payload = JSON.parse(resp.data || "{}"); } catch (parseError) {}
     throw new Error(payload.message || "签到请求失败（HTTP " + resp.status + "）");
   }
+  if (resp.status >= 400) {
+    throw new Error("签到请求失败（HTTP " + resp.status + "）");
+  }
+  const code = payload && payload.code;
+  if (code !== undefined && code !== 200 && code !== 0 && code !== "success") {
+    throw new Error((payload && (payload.message || payload.msg)) || "签到接口返回异常（HTTP " + resp.status + "）");
+  }
+  return payload;
 }
 
 function formatQuota(value) {
